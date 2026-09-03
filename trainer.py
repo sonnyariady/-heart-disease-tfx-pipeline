@@ -56,17 +56,18 @@ def _build_keras_model(tf_transform_output, hyperparameters=None):
 
     dense_input = tf.keras.layers.DenseFeatures(feature_columns)(input_layers)
     
-    if hyperparameters and 'values' in hyperparameters:
-        hps = hyperparameters['values']
-        units_1 = hps.get('units_1', 64)
-        units_2 = hps.get('units_2', 32)
-        dropout_rate = hps.get('dropout_rate', 0.2)
-        learning_rate = hps.get('learning_rate', 0.001)
+    # Extract hyperparameters from Tuner output safely
+    if hasattr(hyperparameters, 'get'):
+        hp = hyperparameters.get('values', hyperparameters)
+    elif hasattr(hyperparameters, 'values'):
+        hp = hyperparameters.values
     else:
-        units_1 = 64
-        units_2 = 32
-        dropout_rate = 0.2
-        learning_rate = 0.001
+        hp = hyperparameters if isinstance(hyperparameters, dict) else {}
+        
+    units_1 = hp.get('units_1', 64)
+    units_2 = hp.get('units_2', 64)
+    dropout_rate = hp.get('dropout_rate', 0.5)
+    learning_rate = hp.get('learning_rate', 0.01)
 
     x = tf.keras.layers.Dense(units_1, activation='relu')(dense_input)
     x = tf.keras.layers.BatchNormalization()(x)
